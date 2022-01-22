@@ -7,6 +7,12 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 
+#include "Projectile.h"
+#include "Animation/AnimInstance.h"
+#include "Kismet/GameplayStatics.h"
+
+#include "FPSGameMode.h"
+
 // Sets default values
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -49,6 +55,10 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
     
     GunMesh->AttachToComponent(HandsMesh, FAttachmentTransformRules::SnapToTargetNotIncludingScale, TEXT("GripPoint"));
+    
+    World = GetWorld();
+    
+    AnimInstance = HandsMesh->GetAnimInstance();
 	
 }
 
@@ -79,7 +89,28 @@ void AEnemyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 
 void AEnemyCharacter::OnFire()
 {
-
+    if (World != nullptr)
+    {
+        SpawnRotation = GetControlRotation();
+        
+        SpawnLocation = (MuzzleLocation != nullptr ? MuzzleLocation->GetComponentLocation() : GetActorLocation()) + SpawnRotation.RotateVector(GunOffset);
+        
+        // TODO: this might not be want we want because we might not want the bullet being spawned elsewhere
+        FActorSpawnParameters ActorSpawnParams;
+        ActorSpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+        
+        World->SpawnActor<AProjectile>(Projectile, SpawnLocation, SpawnRotation, ActorSpawnParams);
+        
+        if (FireSound != nullptr)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetActorLocation());
+        }
+        
+        if (FireAnimation != nullptr && AnimInstance != nullptr)
+        {
+            AnimInstance->Montage_Play(FireAnimation, 1.0f);
+        }
+    }
 }
 
 void AEnemyCharacter::MoveForward(float Value)
