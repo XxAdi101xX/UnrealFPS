@@ -6,7 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 
-//#include "Enemy.h"
+#include "EnemyCharacter.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -48,6 +48,12 @@ void AProjectile::OnHit(UPrimitiveComponent *HitComp, AActor *OtherActor,
            UPrimitiveComponent *OtherComp, int32 OtherBodyIndex,
            bool bFromSweep, const FHitResult &Hit)
 {
+    AEnemyCharacter *EnemyChar = Cast<AEnemyCharacter>(OtherActor);
     
+    if (EnemyChar)
+    {
+        EnemyChar->DealDamage(DamageValue);
+        Destroy();
+    }
 }
 

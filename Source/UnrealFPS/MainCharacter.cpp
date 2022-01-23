@@ -139,4 +139,16 @@ void AMainCharacter::LookAtRate(float Rate)
     AddControllerPitchInput(Rate * LookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+void AMainCharacter::DealDamage(float DamageAmount)
+{
+    Health -= DamageAmount;
+    
+    if (Health <= 0.0f)
+    {
+        // Restart game
+        
+        Destroy();
+    }
+}
+
 

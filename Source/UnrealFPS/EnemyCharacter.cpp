@@ -89,8 +89,12 @@ void AEnemyCharacter::OnHit(UPrimitiveComponent *HitComp, AActor *OtherActor,
            UPrimitiveComponent *OtherComp, int32 OtherBodyIndex,
            bool bFromSweep, const FHitResult &Hit)
 {
+    AMainCharacter *MainChar = Cast<AMainCharacter>(OtherActor);
     
-    
+    if (MainChar)
+    {
+        MainChar->DealDamage(DamageValue);
+    }
 }
 
 void AEnemyCharacter::OnSensed(const TArray<AActor *> &UpdatedActors)
@@ -137,5 +141,10 @@ void AEnemyCharacter::SetNewRotation(FVector TargetPosition, FVector CurrentPosi
 
 void AEnemyCharacter::DealDamage(float DamageAmount)
 {
+    Health -= DamageAmount;
     
+    if (Health <= 0.0f)
+    {
+        Destroy();
+    }
 }
