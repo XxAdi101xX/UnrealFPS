@@ -146,6 +146,12 @@ void AMainCharacter::DealDamage(float DamageAmount)
     if (Health <= 0.0f)
     {
         // Restart game
+        AFPSGameMode *GameMode = Cast<AFPSGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+        
+        if (GameMode)
+        {
+            GameMode->RestartGameplay(false);
+        }
         
         Destroy();
     }
