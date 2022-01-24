@@ -27,7 +27,7 @@ void AFPSGameMode::RestartGameplay(bool Won)
 
 void AFPSGameMode::ResetLevel()
 {
-    UGameplayStatics::OpenLevel(GetWorld(), "MainLevel");
+    UGameplayStatics::OpenLevel(GetWorld(), "FirstPersonExampleMap");
 }
 
 void AFPSGameMode::CountDownTimer()
