@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "MainCharacter.generated.h"
 
+class APortalManager;
+
 UCLASS()
 class UNREALFPS_API AMainCharacter : public ACharacter
 {
@@ -79,5 +81,14 @@ public:
     float Health = 100.0f;
     
     void DealDamage(float DamageAmount);
+    
+    // TODO: We are currently associating the portal manager with the player instance itself, we want to eventually
+    // support putting other actors through a portal so this should be moved to a more global location
+    
+    UPROPERTY(BlueprintReadOnly, Category = Gameplay)
+    APortalManager *PortalManager;
+    
+    
+    FMatrix GetCameraProjectionMatrix();
 
 };

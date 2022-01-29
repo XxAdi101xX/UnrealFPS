@@ -12,6 +12,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "FPSGameMode.h"
+#include "PortalManager.h"
 
 // Sets default values
 AMainCharacter::AMainCharacter()
@@ -60,13 +61,25 @@ void AMainCharacter::BeginPlay()
     World = GetWorld();
     
     AnimInstance = HandsMesh->GetAnimInstance();
+    
+    // Create the Portal Manager;
+    FActorSpawnParameters SpawnParams;
+
+    PortalManager = GetWorld()->SpawnActor<APortalManager>(APortalManager::StaticClass(),
+                                                          FVector::ZeroVector,
+                                                          FRotator::ZeroRotator,
+                                                          SpawnParams);
+    PortalManager->AttachToActor(this, FAttachmentTransformRules::SnapToTargetIncludingScale);
+    PortalManager->SetPlayer(this);
+    PortalManager->Init();
 }
 
 // Called every frame
 void AMainCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+    
+    PortalManager->Update(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -155,6 +168,24 @@ void AMainCharacter::DealDamage(float DamageAmount)
         
         Destroy();
     }
+}
+
+FMatrix AMainCharacter::GetCameraProjectionMatrix()
+{
+    FMatrix ProjectionMatrix;
+
+    if( UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetLocalPlayer() != nullptr )
+    {
+        FSceneViewProjectionData PlayerProjectionData;
+
+        UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetLocalPlayer()->GetProjectionData( UGameplayStatics::GetPlayerController(GetWorld(), 0)->GetLocalPlayer()->ViewportClient->Viewport,
+                                        EStereoscopicPass::eSSP_FULL,
+                                        PlayerProjectionData );
+
+        ProjectionMatrix = PlayerProjectionData.ProjectionMatrix;
+    }
+
+    return ProjectionMatrix;
 }
 
 

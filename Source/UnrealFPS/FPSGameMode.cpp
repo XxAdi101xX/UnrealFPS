@@ -3,7 +3,21 @@
 
 #include "FPSGameMode.h"
 
+#include "MainCharacter.h"
 #include "Kismet/GameplayStatics.h"
+
+
+AFPSGameMode::AFPSGameMode() : AGameMode()
+{
+    // See https://answers.unrealengine.com/questions/486440/how-to-use-the-player-controller-class-in-c.html for more details
+    
+    //PlayerControllerClass = ACustomPlayerController::StaticClass();
+    DefaultPawnClass = AMainCharacter::StaticClass();
+    //GameStateClass = ACustomGameState::StaticClass();
+    //HUDClass = ACustomGameHUD::StaticClass();
+    //ReplaySpectatorPlayerControllerClass = ACustomReplaySpectatorPlayerController::StaticClass();
+    //SpectatorClass = ACustomSpectatorClass::StaticClass();
+}
 
 void AFPSGameMode::BeginPlay()
 {

@@ -16,6 +16,8 @@ class UNREALFPS_API AFPSGameMode : public AGameMode
 	
 public:
     
+    AFPSGameMode();
+    
     void RestartGameplay(bool Won);
     
     UPROPERTY(BlueprintReadOnly)
