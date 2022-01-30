@@ -93,6 +93,7 @@ bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FV
     
     bool HasIntersected = FMath::SegmentPlaneIntersection(LastLocation, NewLocation, PlaneOfPortal, IntersectionPoint);
     bool HasCrossedPortal = HasIntersected && IsLocationInFront(LastLocation, PortalLocation, PortalNormal) && !IsLocationInFront(NewLocation, PortalLocation, PortalNormal);
+    UE_LOG(LogTemp, Warning, TEXT("HasCrossedPortal: %s"), ( HasCrossedPortal ? TEXT("true") : TEXT("false") ));
     
     LastLocation = NewLocation;
     return HasCrossedPortal;
