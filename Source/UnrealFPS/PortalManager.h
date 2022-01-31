@@ -19,7 +19,7 @@ class UNREALFPS_API APortalManager : public AActor
 	
 protected:
     // Called when the game starts or when spawned
-    //virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
 public:
     // Called every frame
@@ -37,16 +37,8 @@ public:
     // Manual Tick // TODO: where do we call this?
     void Update(float DeltaTime);
 
-    // Find all the portals in world and update them
-    // returns the most valid/usable one for the Player
-    APortal *UpdatePortalsInWorld();
-
     // Update SceneCapture
     void UpdateCapture(APortal* Portal);
-    
-    // Called by a Portal to teleport an actor
-    UFUNCTION(BlueprintCallable, Category = Portal)
-    void RequestTeleportByPortal(APortal *Portal, AActor *TargetToTeleport);
 
 private:
     //Function to create the Portal render target

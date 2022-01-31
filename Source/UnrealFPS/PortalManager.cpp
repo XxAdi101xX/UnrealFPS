@@ -25,18 +25,16 @@ APortalManager::APortalManager()
 }
 
 // Called when the game starts or when spawned
-/*
 void APortalManager::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
+/*
 // Called every frame
 void APortalManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }*/
 
 void APortalManager::SetPlayer(AMainCharacter *NewPlayer)
@@ -105,50 +103,11 @@ void APortalManager::Update(float DeltaTime)
     //-----------------------------------
     // Find portals in the level and update them
     //-----------------------------------
-    APortal* Portal = UpdatePortalsInWorld();
-
-    if (Portal != nullptr)
-    {
-        UpdateCapture(Portal);
-    }
-}
-
-
-APortal *APortalManager::UpdatePortalsInWorld()
-{
-    if (CharacterOwner == nullptr)
-    {
-        return nullptr;
-    }
-
-    //-----------------------------------
-    // Update Portal actors in the world (and active one if nearby)
-    //-----------------------------------
-    APortal *ActivePortal = nullptr;
-    FVector PlayerLocation      = CharacterOwner->GetActorLocation();
-    float Distance              = 4096.0f;
-
     for( TActorIterator<APortal>ActorItr( GetWorld() ); ActorItr; ++ActorItr )
     {
-        APortal *Portal   = *ActorItr;
-        FVector PortalLocation  = Portal->GetActorLocation();
-        FVector PortalNormal    = -1 * Portal->GetActorForwardVector();
-
-        // Reset Portal
-        Portal->ClearRenderTargetTexture();
-        Portal->SetActive(false);
-
-        // Find the closest Portal when the player is Standing in front of
-        float NewDistance = FMath::Abs( FVector::Dist( PlayerLocation, PortalLocation ) );
-
-        if( NewDistance < Distance )
-        {
-            Distance        = NewDistance;
-            ActivePortal    = Portal;
-        }
+        ActorItr->ClearRenderTargetTexture();
+        UpdateCapture(*ActorItr);
     }
-
-    return ActivePortal;
 }
 
 // Update SceneCapture
@@ -208,7 +167,7 @@ void APortalManager::UpdateCapture(APortal *Portal)
         }
 
         // Switch on the valid Portal
-        Portal->SetActive( true );
+        //Portal->SetActive( true );
 
         // Assign the Render Target
         Portal->SetRenderTargetTexture( PortalTexture );
@@ -281,25 +240,6 @@ void APortalManager::GeneratePortalTexture()
     else
     {
         PortalTexture-> ResizeTarget( CurrentSizeX, CurrentSizeY );
-    }
-}
-
-void APortalManager::RequestTeleportByPortal(APortal *Portal, AActor *TargetToTeleport)
-{
-    if( Portal != nullptr && TargetToTeleport != nullptr )
-    {
-        Portal->TeleportActor( TargetToTeleport );
-
-        //-----------------------------------
-        //Force update
-        //-----------------------------------
-        APortal *FuturePortal = UpdatePortalsInWorld();
-
-        if( FuturePortal != nullptr )
-        {
-            FuturePortal->ForceTick(); //Force update before the player render its view since he just teleported
-            UpdateCapture( FuturePortal );
-        }
     }
 }
 

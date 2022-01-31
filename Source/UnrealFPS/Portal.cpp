@@ -6,6 +6,8 @@
 #include "MainCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 APortal::APortal()
@@ -13,7 +15,8 @@ APortal::APortal()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
     
-    bIsActive = false;
+    TargetPortal = nullptr;
+    bIsActive = true;
     
     RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
     RootComponent->Mobility = EComponentMobility::Static;
@@ -31,14 +34,12 @@ APortal::APortal()
 void APortal::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void APortal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void APortal::SetActive(bool NewActiveState)
@@ -63,20 +64,45 @@ void APortal::ClearRenderTargetTexture_Implementation()
 
 }
 
-// Empty default implementation
-void APortal::ForceTick_Implementation()
-{
-
-}
-
-void APortal::SetTarget(AActor *NewTarget)
-{
-    Target = NewTarget;
-}
-
 AActor *APortal::GetTarget()
 {
-    return Target;
+    if (TargetPortal == nullptr)
+    {
+        // Get the target portal
+        TArray<APortal*> Portals;
+        for(TActorIterator<APortal> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+        {
+            Portals.Add(*ActorItr);
+        }
+        
+        // Sort the portals by the ID Name to associate each ordered pair as linked
+        Portals.Sort([](const APortal& p1, const APortal& p2){
+            return  p1.GetName() < p2.GetName();
+        });
+
+        // Target Portal is nullptr by default as set in the constructor
+        for (int i = 0; i < Portals.Num(); ++i)
+        {
+            if (Portals[i]->GetName().Equals(this->GetName(), ESearchCase::CaseSensitive))
+            {
+                if (i % 2 == 0)
+                {
+                    if (i == Portals.Num() - 1)
+                    {
+                        TargetPortal = nullptr;
+                    }
+                    
+                    TargetPortal = Portals[i + 1];
+                }
+                else
+                {
+                    TargetPortal = Portals[i - 1];
+                }
+            }
+        }
+    }
+    
+    return TargetPortal;
 }
 
 bool APortal::IsLocationInFront(FVector Location, FVector PortalLocation, FVector PortalNormal)
@@ -93,7 +119,7 @@ bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FV
     
     bool HasIntersected = FMath::SegmentPlaneIntersection(LastLocation, NewLocation, PlaneOfPortal, IntersectionPoint);
     bool HasCrossedPortal = HasIntersected && IsLocationInFront(LastLocation, PortalLocation, PortalNormal) && !IsLocationInFront(NewLocation, PortalLocation, PortalNormal);
-    UE_LOG(LogTemp, Warning, TEXT("HasCrossedPortal: %s"), ( HasCrossedPortal ? TEXT("true") : TEXT("false") ));
+    //UE_LOG(LogTemp, Warning, TEXT("HasCrossedPortal: %s"), ( HasCrossedPortal ? TEXT("true") : TEXT("false") ));
     
     LastLocation = NewLocation;
     return HasCrossedPortal;
@@ -102,13 +128,14 @@ bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FV
 
 void APortal::TeleportActor(AActor *ActorToTeleport)
 {
-    if (ActorToTeleport == nullptr || Target == nullptr)
+    //UE_LOG(LogTemp, Warning, TEXT("Is target null: %s"), ( Target == nullptr ? TEXT("true") : TEXT("false") ));
+    if (ActorToTeleport == nullptr || TargetPortal == nullptr)
     {
         return;
     }
     
     // Apply new location
-    FVector NewLocation = ConvertLocationToActorSpace(ActorToTeleport->GetActorLocation(), this, Target);
+    FVector NewLocation = ConvertLocationToActorSpace(ActorToTeleport->GetActorLocation(), this, TargetPortal);
     FHitResult HitResult;
     ActorToTeleport->SetActorLocation(NewLocation, false, &HitResult, ETeleportType::TeleportPhysics);
     
@@ -116,10 +143,9 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
     LastLocation = NewLocation;
     
     // Apply new rotation
-    FRotator NewRotation = ConvertRotationToActorSpace(ActorToTeleport->GetActorRotation(), this, Target);
+    FRotator NewRotation = ConvertRotationToActorSpace(ActorToTeleport->GetActorRotation(), this, TargetPortal);
     ActorToTeleport->SetActorRotation( NewRotation );
     
-    // TODO THIS IS INCOMPLETE
     if (ActorToTeleport->IsA(AMainCharacter::StaticClass()))
     {
         FVector Velocity = FVector::ZeroVector;
@@ -137,7 +163,7 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
 
         if (PlayerController != nullptr)
         {
-            NewRotation = ConvertRotationToActorSpace(PlayerController->GetControlRotation(), this, Target);
+            NewRotation = ConvertRotationToActorSpace(PlayerController->GetControlRotation(), this, TargetPortal);
 
             PlayerController->SetControlRotation(NewRotation);
         }
@@ -149,12 +175,11 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
             Dots.Y  = FVector::DotProduct( Velocity, GetActorRightVector() );
             Dots.Z  = FVector::DotProduct( Velocity, GetActorUpVector() );
 
-            FVector NewVelocity     = Dots.X * Target->GetActorForwardVector()
-                                    + Dots.Y * Target->GetActorRightVector()
-                                    + Dots.Z * Target->GetActorUpVector();
+            FVector NewVelocity     = Dots.X * TargetPortal->GetActorForwardVector()
+                                    + Dots.Y * TargetPortal->GetActorRightVector()
+                                    + Dots.Z * TargetPortal->GetActorUpVector();
 
-            // TODO THIS IS INCOMPLETE
-            //->GetMovementComponent()->Velocity = NewVelocity;
+            MainCharacter->GetMovementComponent()->Velocity = NewVelocity;
         }
     }
 }
@@ -226,4 +251,6 @@ FRotator APortal::ConvertRotationToActorSpace(FRotator Rotation, AActor *Referen
 
     return NewWorldQuat.Rotator();
 }
+
+
 

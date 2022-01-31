@@ -27,7 +27,7 @@ public:
     UFUNCTION(BlueprintPure, Category = Portal)
     bool IsActive();
     
-    // Set active state
+    // Set active state TODO: currently unused
     UFUNCTION(BluePrintCallable, Category = Portal)
     void SetActive(bool NewActiveState);
     
@@ -38,14 +38,6 @@ public:
     // Clear the render target texture
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Portal)
     void ClearRenderTargetTexture();
-    
-    // Force an update
-    UFUNCTION(BlueprintNativeEvent, Category = Portal)
-    void ForceTick();
-    
-    // Set the target portal
-    UFUNCTION(BlueprintCallable, Category= Portal)
-    void SetTarget(AActor *NewTarget);
     
     // Get the target portal
     UFUNCTION(BlueprintPure, Category = Portal)
@@ -76,9 +68,10 @@ protected:
     USceneComponent* PortalRootComponent;
 
 private:
+    // TODO: this and the setter function is not being used currently, should be addressed
     bool bIsActive;
 
-    AActor *Target;
+    APortal *TargetPortal;
 
     // TODO: Last location is currently uninitialized so we want to get the position of the player before start
     // we should also generalize this to work with any actor hence this last position should be a variable on the actor itself?
