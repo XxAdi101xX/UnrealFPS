@@ -108,7 +108,7 @@ bool APortal::IsLocationInFront(FVector Location, FVector PortalLocation, FVecto
 {
     FPlane PlaneOfPortal = FPlane(PortalLocation, PortalNormal);
     
-    return PlaneOfPortal.PlaneDot(Location) >= 0;
+    return PlaneOfPortal.PlaneDot(Location) > 0;
 }
 
 bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FVector PortalNormal)
