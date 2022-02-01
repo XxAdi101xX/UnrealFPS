@@ -10,32 +10,19 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "EngineUtils.h"
 
-// Sets default values
 APortalManager::APortalManager()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
     
     PortalTexture = nullptr;
-    UpdateDelay = 1.1f;
-
     PreviousScreenSizeX = 0;
     PreviousScreenSizeY = 0;
-
 }
 
-// Called when the game starts or when spawned
 void APortalManager::BeginPlay()
 {
 	Super::BeginPlay();
 }
-
-/*
-// Called every frame
-void APortalManager::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}*/
 
 void APortalManager::SetPlayer(AMainCharacter *NewPlayer)
 {
@@ -44,9 +31,7 @@ void APortalManager::SetPlayer(AMainCharacter *NewPlayer)
 
 void APortalManager::Init()
 {
-    //------------------------------------------------
-    //Create Camera
-    //------------------------------------------------
+    // Create screen capture
     SceneCapture = NewObject<USceneCaptureComponent2D>(this, USceneCaptureComponent2D::StaticClass(), *FString("PortalSceneCapture"));
 
     SceneCapture->AttachToComponent( GetRootComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale );
@@ -80,68 +65,42 @@ void APortalManager::Init()
 
     SceneCapture->PostProcessSettings = CaptureSettings;
 
-    //------------------------------------------------
-    //Create RTT Buffer
-    //------------------------------------------------
     GeneratePortalTexture();
 }
 
 // Manual Tick
 void APortalManager::Update(float DeltaTime)
 {
-    //-----------------------------------
-    // Generate Portal texture ?
-    //-----------------------------------
-    // TODO can remove the entire section with the update delay?
-    UpdateDelay += DeltaTime;
-
-    if (UpdateDelay > 1.0f)
+    for (TActorIterator<APortal> PortalIterator(GetWorld()); PortalIterator; ++PortalIterator)
     {
-        UpdateDelay = 0.0f;
-        //GeneratePortalTexture();
-    }
-
-    //-----------------------------------
-    // Find portals in the level and update them
-    //-----------------------------------
-    for( TActorIterator<APortal>ActorItr( GetWorld() ); ActorItr; ++ActorItr )
-    {
-        ActorItr->ClearRenderTargetTexture();
-        UpdateCapture(*ActorItr);
+        PortalIterator->ClearRenderTargetTexture();
+        UpdateCapture(*PortalIterator);
     }
 }
 
 // Update SceneCapture
 void APortalManager::UpdateCapture(APortal *Portal)
 {
-    if( CharacterOwner == nullptr )
+    if (CharacterOwner == nullptr)
     {
         return;
     }
 
-    //-----------------------------------
     // Update SceneCapture (discard if there is no active portal)
-    //-----------------------------------
     if (SceneCapture != nullptr && PortalTexture != nullptr && Portal != nullptr)
     {
-
         APlayerCameraManager* PlayerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
         AActor* Target  = Portal->GetTarget();
 
         //Place the SceneCapture to the Target
         if (Target != nullptr)
         {
-            //-------------------------------
-            // Compute new location in the space of the target actor
-            // (which may not be aligned to world)
-            //-------------------------------
+            // Compute new location in the space of the target actor (which may not be aligned to world)
             FVector NewLocation = Portal->ConvertLocationToActorSpace(PlayerCameraManager->GetCameraLocation(), Portal, Target);
 
             SceneCapture->SetWorldLocation(NewLocation);
 
-            //-------------------------------
-            //Compute new Rotation in the space of the target location
-            //-------------------------------
+            // Compute new Rotation in the space of the target location
             FRotator CameraRotation  = PlayerCameraManager->GetCameraRotation();
             FTransform SourceTransform  = Portal->GetActorTransform();
             FTransform TargetTransform  = Target->GetActorTransform();
@@ -152,13 +111,9 @@ void APortalManager::UpdateCapture(APortal *Portal)
             //Update SceneCapture rotation
             SceneCapture->SetWorldRotation(NewWorldQuat);
 
-            //-------------------------------
-            //Clip Plane : to ignore objects between the
-            //SceneCapture and the TargetPortal
-            //-------------------------------
+            // Add a clip plane to ignore objects between the SceneCapture and the TargetPortal when rendering the portal texture
             SceneCapture->ClipPlaneNormal   = Target->GetActorForwardVector();
-            SceneCapture->ClipPlaneBase     = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -617.5f); //Offset to avoid visible pixel border
-            //UE_LOG(LogTemp, Warning, TEXT("Actor location is: %s"), *(Target->GetActorLocation()).ToString());
+            SceneCapture->ClipPlaneBase     = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -617.5f); // Offset to compensate the clipping plane being too far into the actual view
         }
 
         // Assign the Render Target
@@ -168,7 +123,6 @@ void APortalManager::UpdateCapture(APortal *Portal)
         // Get the Projection Matrix
         SceneCapture->CustomProjectionMatrix = CharacterOwner->GetCameraProjectionMatrix();
 
-        // Say Cheeeeese !
         SceneCapture->CaptureScene();
     }
 }
@@ -184,13 +138,8 @@ void APortalManager::GeneratePortalTexture()
         UGameplayStatics::GetPlayerController(CharacterOwner, 0)->GetViewportSize(CurrentSizeX, CurrentSizeY);
     }
 
-    // Use a smaller size than the current
-    // screen to reduce the performance impact
-    CurrentSizeX = FMath::Clamp( int(CurrentSizeX / 1.7), 128, 1920); //1920 / 1.5 = 1280
-    CurrentSizeY = FMath::Clamp( int(CurrentSizeY / 1.7), 128, 1080);
 
-    if( CurrentSizeX == PreviousScreenSizeX
-    &&  CurrentSizeY == PreviousScreenSizeY )
+    if (CurrentSizeX == PreviousScreenSizeX && CurrentSizeY == PreviousScreenSizeY)
     {
         return;
     }
@@ -198,9 +147,8 @@ void APortalManager::GeneratePortalTexture()
     PreviousScreenSizeX = CurrentSizeX;
     PreviousScreenSizeY = CurrentSizeY;
 
-
     // Create the RenderTarget if it does not exist
-    if( PortalTexture == nullptr )
+    if (PortalTexture == nullptr)
     {
         // Create new RTT
         PortalTexture = NewObject<UTextureRenderTarget2D>(
@@ -219,19 +167,12 @@ void APortalManager::GeneratePortalTexture()
         PortalTexture->bNeedsTwoCopies      = false;
         PortalTexture->AddressX             = TextureAddress::TA_Clamp;
         PortalTexture->AddressY             = TextureAddress::TA_Clamp;
-
-        // Not needed since the texture is displayed on screen directly
-        // in some engine versions this can even lead to crashes (notably 4.24/4.25)
         PortalTexture->bAutoGenerateMips    = false;
-
-        // This force the engine to create the render target
-        // with the parameters we defined just above
-        PortalTexture->UpdateResource();
+        PortalTexture->UpdateResource(); // Force the engine to create the render target
     }
-    // Resize the RenderTarget if it already exists
     else
     {
-        // TODO we can probably remove this else case
+        // Resize the RenderTarget if it already exists TODO currently being unused
         PortalTexture-> ResizeTarget( CurrentSizeX, CurrentSizeY );
     }
 }

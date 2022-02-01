@@ -27,7 +27,6 @@ APortal::APortal()
     PortalRootComponent->SetRelativeLocation( FVector(0.0f, 0.0f, 0.0f) );
     PortalRootComponent->SetRelativeRotation( FRotator(0.0f, 0.0f, 0.0f) );
     PortalRootComponent->Mobility = EComponentMobility::Movable; // Set as dynamic in case the blueprint class animates it
-
 }
 
 // Called when the game starts or when spawned
@@ -52,13 +51,13 @@ bool APortal::IsActive()
     return bIsActive;
 }
 
-// Empty default implementation
+// Empty default implementation (defined in blueprints)
 void APortal::SetRenderTargetTexture_Implementation(UTexture *RenderTexture)
 {
 
 }
 
-// Empty default implementation
+// Empty default implementation (defined in blueprints)
 void APortal::ClearRenderTargetTexture_Implementation()
 {
 
@@ -70,13 +69,13 @@ AActor *APortal::GetTarget()
     {
         // Get the target portal
         TArray<APortal*> Portals;
-        for(TActorIterator<APortal> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+        for(TActorIterator<APortal> PortalIter(GetWorld()); PortalIter; ++PortalIter)
         {
-            Portals.Add(*ActorItr);
+            Portals.Add(*PortalIter);
         }
         
         // Sort the portals by the ID Name to associate each ordered pair as linked
-        Portals.Sort([](const APortal& p1, const APortal& p2){
+        Portals.Sort([](const APortal& p1, const APortal& p2) {
             return  p1.GetName() < p2.GetName();
         });
 
@@ -118,8 +117,9 @@ bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FV
     FPlane PlaneOfPortal = FPlane(PortalLocation, PortalNormal);
     
     bool HasIntersected = FMath::SegmentPlaneIntersection(LastLocation, NewLocation, PlaneOfPortal, IntersectionPoint);
-    bool HasCrossedPortal = HasIntersected && IsLocationInFront(LastLocation, PortalLocation, PortalNormal) && !IsLocationInFront(NewLocation, PortalLocation, PortalNormal);
-    //UE_LOG(LogTemp, Warning, TEXT("HasCrossedPortal: %s"), ( HasCrossedPortal ? TEXT("true") : TEXT("false") ));
+    bool HasCrossedPortal = HasIntersected
+                            && IsLocationInFront(LastLocation, PortalLocation, PortalNormal)
+                            && !IsLocationInFront(NewLocation, PortalLocation, PortalNormal);
     
     LastLocation = NewLocation;
     return HasCrossedPortal;
@@ -128,7 +128,6 @@ bool APortal::HasLocationCrossed(FVector NewLocation, FVector PortalLocation, FV
 
 void APortal::TeleportActor(AActor *ActorToTeleport)
 {
-    //UE_LOG(LogTemp, Warning, TEXT("Is target null: %s"), ( Target == nullptr ? TEXT("true") : TEXT("false") ));
     if (ActorToTeleport == nullptr || TargetPortal == nullptr)
     {
         return;
@@ -151,7 +150,7 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
         FVector Velocity = FVector::ZeroVector;
         AMainCharacter *MainCharacter = nullptr;
 
-        if(ActorToTeleport->IsA(AMainCharacter::StaticClass()))
+        if (ActorToTeleport->IsA(AMainCharacter::StaticClass()))
         {
             MainCharacter = Cast<AMainCharacter>(ActorToTeleport);
 
@@ -169,18 +168,17 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
         }
 
         // Reapply Velocity (Need to reorient direction into local space of Portal)
-        {
-            FVector Dots;
-            Dots.X  = FVector::DotProduct( Velocity, GetActorForwardVector() );
-            Dots.Y  = FVector::DotProduct( Velocity, GetActorRightVector() );
-            Dots.Z  = FVector::DotProduct( Velocity, GetActorUpVector() );
+        FVector Dots;
+        Dots.X  = FVector::DotProduct( Velocity, GetActorForwardVector() );
+        Dots.Y  = FVector::DotProduct( Velocity, GetActorRightVector() );
+        Dots.Z  = FVector::DotProduct( Velocity, GetActorUpVector() );
 
-            FVector NewVelocity     = Dots.X * TargetPortal->GetActorForwardVector()
-                                    + Dots.Y * TargetPortal->GetActorRightVector()
-                                    + Dots.Z * TargetPortal->GetActorUpVector();
+        FVector NewVelocity     = Dots.X * TargetPortal->GetActorForwardVector()
+                                + Dots.Y * TargetPortal->GetActorRightVector()
+                                + Dots.Z * TargetPortal->GetActorUpVector();
 
-            MainCharacter->GetMovementComponent()->Velocity = NewVelocity;
-        }
+        MainCharacter->GetMovementComponent()->Velocity = NewVelocity;
+
     }
 }
 
@@ -208,7 +206,6 @@ bool APortal::IsPointInsideBox( FVector Point, UBoxComponent* Box )
                     FMath::Abs( FVector::DotProduct( Direction, DirectionZ ) ) <= Half.Z;
     
     //UE_LOG(LogTemp, Warning, TEXT("Half: %s, Direction: %s, %s, %s, %s"),*Half.ToString(), *Direction.ToString(),( FMath::Abs( FVector::DotProduct( Direction, DirectionX ) ) <= Half.X ? TEXT("true") : TEXT("false") ),( FMath::Abs( FVector::DotProduct( Direction, DirectionY ) ) <= Half.Y ? TEXT("true") : TEXT("false") ),( FMath::Abs( FVector::DotProduct( Direction, DirectionZ ) ) <= Half.Z ? TEXT("true") : TEXT("false") ));
-    //UE_LOG(LogTemp, Warning, TEXT("IsInside: %s"), ( IsInside ? TEXT("true") : TEXT("false") ));
 
     return IsInside;
 }

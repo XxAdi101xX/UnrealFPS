@@ -22,9 +22,6 @@ protected:
     virtual void BeginPlay() override;
 
 public:
-    // Called every frame
-    //virtual void Tick(float DeltaTime) override;
-    
 	// Sets default values for this actor's properties
 	APortalManager();
 
@@ -34,14 +31,13 @@ public:
     // Various setup that happens during spawn
     void Init();
 
-    // Manual Tick // TODO: where do we call this?
+    // Manual Tick called in the MainCharacter tick() method to ensure it's run after all of the calculation for the main character
     void Update(float DeltaTime);
 
     // Update SceneCapture
     void UpdateCapture(APortal* Portal);
 
 private:
-    //Function to create the Portal render target
     void GeneratePortalTexture();
 
     UPROPERTY()
@@ -55,7 +51,4 @@ private:
 
     int32 PreviousScreenSizeX;
     int32 PreviousScreenSizeY;
-
-    float UpdateDelay;
-
 };
