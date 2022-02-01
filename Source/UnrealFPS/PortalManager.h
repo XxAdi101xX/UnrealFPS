@@ -28,27 +28,10 @@ public:
     // Save a reference to the Player
     void SetPlayer(AMainCharacter *NewPlayer);
 
-    // Various setup that happens during spawn
-    void Init();
-
     // Manual Tick called in the MainCharacter tick() method to ensure it's run after all of the calculation for the main character
     void Update(float DeltaTime);
 
-    // Update SceneCapture
-    void UpdateCapture(APortal* Portal);
-
 private:
-    void GeneratePortalTexture();
-
-    UPROPERTY()
-    USceneCaptureComponent2D *SceneCapture;
-
-    UPROPERTY(transient)
-    UTextureRenderTarget2D *PortalTexture;
-
-    UPROPERTY()
     AMainCharacter *CharacterOwner;
 
-    int32 PreviousScreenSizeX;
-    int32 PreviousScreenSizeY;
 };

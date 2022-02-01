@@ -71,7 +71,6 @@ void AMainCharacter::BeginPlay()
                                                           SpawnParams);
     PortalManager->AttachToActor(this, FAttachmentTransformRules::SnapToTargetIncludingScale);
     PortalManager->SetPlayer(this);
-    PortalManager->Init();
 }
 
 // Called every frame

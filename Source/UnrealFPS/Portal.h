@@ -62,6 +62,8 @@ public:
     FVector ConvertLocationToActorSpace(FVector Location, AActor *ReferenceActor, AActor *TargetActor);
     
     FRotator ConvertRotationToActorSpace(FRotator Rotation, AActor *ReferenceActor, AActor *TargetActor);
+    
+    void UpdateCapture(FMatrix CameraProjectionMatrix);
 
 protected:
     UPROPERTY(BlueprintReadOnly)
@@ -76,4 +78,15 @@ private:
     // TODO: Last location is currently uninitialized so we want to get the position of the player before start
     // we should also generalize this to work with any actor hence this last position should be a variable on the actor itself?
     FVector LastLocation;
+    
+    UPROPERTY()
+    USceneCaptureComponent2D *SceneCapture;
+
+    UPROPERTY(transient)
+    UTextureRenderTarget2D *PortalTexture;
+    
+    void GeneratePortalTexture();
+    
+    int32 PreviousViewportSizeX;
+    int32 PreviousViewportSizeY;
 };
