@@ -224,14 +224,16 @@ FVector APortal::ConvertLocationToActorSpace(FVector Location, AActor *Reference
     FVector TargetLocation  = TargetActor->GetActorLocation();
 
     FVector Dots;
-    Dots.X  = FVector::DotProduct( Direction, ReferenceActor->GetActorForwardVector() );
-    Dots.Y  = FVector::DotProduct( Direction, ReferenceActor->GetActorRightVector() );
-    Dots.Z  = FVector::DotProduct( Direction, ReferenceActor->GetActorUpVector() );
+    Dots.X = FVector::DotProduct(Direction, ReferenceActor->GetActorForwardVector());
+    Dots.Y = FVector::DotProduct(Direction, ReferenceActor->GetActorRightVector());
+    Dots.Z = FVector::DotProduct(Direction, ReferenceActor->GetActorUpVector());
 
     FVector NewDirection    = Dots.X * TargetActor->GetActorForwardVector()
                             + Dots.Y * TargetActor->GetActorRightVector()
+    
                             + Dots.Z * TargetActor->GetActorUpVector();
 
+    UE_LOG(LogTemp, Warning, TEXT("New direction is: %s"), *NewDirection.ToString());
     return TargetLocation + NewDirection;
 }
 
@@ -244,7 +246,7 @@ FRotator APortal::ConvertRotationToActorSpace(FRotator Rotation, AActor *Referen
 
     FTransform SourceTransform  = ReferenceActor->GetActorTransform();
     FTransform TargetTransform  = TargetActor->GetActorTransform();
-    FQuat QuatRotation          = FQuat( Rotation );
+    FQuat QuatRotation          = FQuat(Rotation);
 
     FQuat LocalQuat             = SourceTransform.GetRotation().Inverse() * QuatRotation;
     FQuat NewWorldQuat          = TargetTransform.GetRotation() * LocalQuat;

@@ -92,12 +92,13 @@ void APortalManager::Update(float DeltaTime)
     //-----------------------------------
     // Generate Portal texture ?
     //-----------------------------------
+    // TODO can remove the entire section with the update delay?
     UpdateDelay += DeltaTime;
 
     if (UpdateDelay > 1.0f)
     {
         UpdateDelay = 0.0f;
-        GeneratePortalTexture();
+        //GeneratePortalTexture();
     }
 
     //-----------------------------------
@@ -121,31 +122,25 @@ void APortalManager::UpdateCapture(APortal *Portal)
     //-----------------------------------
     // Update SceneCapture (discard if there is no active portal)
     //-----------------------------------
-    if(SceneCapture     != nullptr
-    && PortalTexture    != nullptr
-    && Portal   != nullptr
-    && CharacterOwner        != nullptr )
+    if (SceneCapture != nullptr && PortalTexture != nullptr && Portal != nullptr)
     {
 
         APlayerCameraManager* PlayerCameraManager = UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0);
         AActor* Target  = Portal->GetTarget();
 
         //Place the SceneCapture to the Target
-        if( Target != nullptr )
+        if (Target != nullptr)
         {
             //-------------------------------
             // Compute new location in the space of the target actor
             // (which may not be aligned to world)
             //-------------------------------
-            FVector NewLocation = Portal->ConvertLocationToActorSpace(PlayerCameraManager->GetCameraLocation(),
-                                                                      Portal,
-                                                                      Target);
+            FVector NewLocation = Portal->ConvertLocationToActorSpace(PlayerCameraManager->GetCameraLocation(), Portal, Target);
 
-            SceneCapture->SetWorldLocation( NewLocation );
+            SceneCapture->SetWorldLocation(NewLocation);
 
             //-------------------------------
-            //Compute new Rotation in the space of the
-            //Target location
+            //Compute new Rotation in the space of the target location
             //-------------------------------
             FRotator CameraRotation  = PlayerCameraManager->GetCameraRotation();
             FTransform SourceTransform  = Portal->GetActorTransform();
@@ -155,19 +150,16 @@ void APortalManager::UpdateCapture(APortal *Portal)
             FQuat NewWorldQuat          = TargetTransform.GetRotation() * LocalQuat;
 
             //Update SceneCapture rotation
-            SceneCapture->SetWorldRotation( NewWorldQuat );
+            SceneCapture->SetWorldRotation(NewWorldQuat);
 
             //-------------------------------
             //Clip Plane : to ignore objects between the
-            //SceneCapture and the Target of the portal
+            //SceneCapture and the TargetPortal
             //-------------------------------
             SceneCapture->ClipPlaneNormal   = Target->GetActorForwardVector();
-            SceneCapture->ClipPlaneBase     = Target->GetActorLocation()
-                                            + (SceneCapture->ClipPlaneNormal * -1.5f); //Offset to avoid visible pixel border
+            SceneCapture->ClipPlaneBase     = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -617.5f); //Offset to avoid visible pixel border
+            //UE_LOG(LogTemp, Warning, TEXT("Actor location is: %s"), *(Target->GetActorLocation()).ToString());
         }
-
-        // Switch on the valid Portal
-        //Portal->SetActive( true );
 
         // Assign the Render Target
         Portal->SetRenderTargetTexture( PortalTexture );
@@ -239,6 +231,7 @@ void APortalManager::GeneratePortalTexture()
     // Resize the RenderTarget if it already exists
     else
     {
+        // TODO we can probably remove this else case
         PortalTexture-> ResizeTarget( CurrentSizeX, CurrentSizeY );
     }
 }
