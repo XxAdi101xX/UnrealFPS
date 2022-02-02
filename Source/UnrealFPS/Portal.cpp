@@ -215,6 +215,9 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
                                 + Dots.Z * TargetPortal->GetActorUpVector();
 
         MainCharacter->GetMovementComponent()->Velocity = NewVelocity;
+        
+        // Indicate that we did a camera cut due to the player teleportation
+        UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->bGameCameraCutThisFrame = 1u;
 
     }
 }
@@ -313,6 +316,8 @@ void APortal::UpdateCapture(FMatrix CameraProjectionMatrix)
         // Add a clip plane to ignore objects between the SceneCapture and the TargetPortal when rendering the portal texture
         SceneCapture->ClipPlaneNormal   = Target->GetActorForwardVector();
         SceneCapture->ClipPlaneBase     = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -617.5f); // Offset to compensate the clipping plane being too far into the actual view
+        
+        UE_LOG(LogTemp, Warning, TEXT("location data: %s"), *Target->GetActorLocation().ToString());
     }
 
     // Assign the Render Target
