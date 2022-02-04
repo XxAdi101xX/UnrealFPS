@@ -70,8 +70,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gameplay)
     class UAnimMontage *FireAnimation;
     
+    UPROPERTY()
     class UAnimInstance *AnimInstance;
     
+    UPROPERTY()
     class UWorld *World;
     
     FRotator SpawnRotation;
@@ -84,7 +86,6 @@ public:
     
     // TODO: We are currently associating the portal manager with the player instance itself, we want to eventually
     // support putting other actors through a portal so this should be moved to a more global location
-    
     UPROPERTY(BlueprintReadOnly, Category = Gameplay)
     APortalManager *PortalManager;
     

@@ -3,12 +3,14 @@
 #include "Portal.h"
 
 #include "MainCharacter.h"
+#include "Projectile.h"
 #include "Components/BoxComponent.h"
-#include "Kismet/GameplayStatics.h"
-#include "EngineUtils.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "EngineUtils.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APortal::APortal()
@@ -181,18 +183,12 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
     // Apply new rotation
     FRotator NewRotation = ConvertRotationToActorSpace(ActorToTeleport->GetActorRotation(), this, TargetPortal);
     ActorToTeleport->SetActorRotation( NewRotation );
-    
+
+    FVector Velocity = FVector::ZeroVector;
+
     if (ActorToTeleport->IsA(AMainCharacter::StaticClass()))
     {
-        FVector Velocity = FVector::ZeroVector;
-        AMainCharacter *MainCharacter = nullptr;
-
-        if (ActorToTeleport->IsA(AMainCharacter::StaticClass()))
-        {
-            MainCharacter = Cast<AMainCharacter>(ActorToTeleport);
-
-            Velocity = MainCharacter->GetVelocity();
-        }
+        Velocity = Cast<AMainCharacter>(ActorToTeleport)->GetVelocity();
         
         // Update Controller
         APlayerController *PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
@@ -203,22 +199,33 @@ void APortal::TeleportActor(AActor *ActorToTeleport)
 
             PlayerController->SetControlRotation(NewRotation);
         }
-
-        // Reapply Velocity (Need to reorient direction into local space of Portal)
-        FVector Dots;
-        Dots.X  = FVector::DotProduct( Velocity, GetActorForwardVector() );
-        Dots.Y  = FVector::DotProduct( Velocity, GetActorRightVector() );
-        Dots.Z  = FVector::DotProduct( Velocity, GetActorUpVector() );
-
-        FVector NewVelocity     = Dots.X * TargetPortal->GetActorForwardVector()
-                                + Dots.Y * TargetPortal->GetActorRightVector()
-                                + Dots.Z * TargetPortal->GetActorUpVector();
-
-        MainCharacter->GetMovementComponent()->Velocity = NewVelocity;
         
         // Indicate that we did a camera cut due to the player teleportation
         UGameplayStatics::GetPlayerCameraManager(GetWorld(), 0)->bGameCameraCutThisFrame = 1u;
+    }
+    else if (ActorToTeleport->IsA(AProjectile::StaticClass()))
+    {
+        Velocity = Cast<AProjectile>(ActorToTeleport)->GetVelocity();
+    }
 
+    // Reapply Velocity (Need to reorient direction into local space of Portal)
+    FVector Dots;
+    Dots.X  = FVector::DotProduct( Velocity, GetActorForwardVector() );
+    Dots.Y  = FVector::DotProduct( Velocity, GetActorRightVector() );
+    Dots.Z  = FVector::DotProduct( Velocity, GetActorUpVector() );
+
+    FVector NewVelocity     = Dots.X * TargetPortal->GetActorForwardVector()
+                            + Dots.Y * TargetPortal->GetActorRightVector()
+                            + Dots.Z * TargetPortal->GetActorUpVector();
+
+    if (ActorToTeleport->IsA(AMainCharacter::StaticClass()))
+    {
+        Cast<AMainCharacter>(ActorToTeleport)->GetMovementComponent()->Velocity = NewVelocity;
+    }
+    else if (ActorToTeleport->IsA(AProjectile::StaticClass()))
+    {
+        Cast<AProjectile>(ActorToTeleport)->ProjectileMovement->Velocity = NewVelocity;
+        Cast<AProjectile>(ActorToTeleport)->ProjectileMovement->UpdateComponentVelocity();
     }
 }
 
@@ -313,6 +320,10 @@ void APortal::UpdateCapture(FMatrix CameraProjectionMatrix)
         //Update SceneCapture rotation
         SceneCapture->SetWorldRotation(NewWorldQuat);
 
+        // TODO: the clip plane is not working as expected because putting it behind the portal makes the screencapture all blurry for some
+        // reason so it's not actually working to clip anything behind the portal yet. Also more investigation into the calculation of the
+        // offset is required
+        
         // Add a clip plane to ignore objects between the SceneCapture and the TargetPortal when rendering the portal texture
         SceneCapture->ClipPlaneNormal   = Target->GetActorForwardVector();
         SceneCapture->ClipPlaneBase     = Target->GetActorLocation() + (SceneCapture->ClipPlaneNormal * -617.5f); // Offset to compensate the clipping plane being too far into the actual view

@@ -32,6 +32,7 @@ public:
     void Update(float DeltaTime);
 
 private:
+    UPROPERTY()
     AMainCharacter *CharacterOwner;
 
 };
