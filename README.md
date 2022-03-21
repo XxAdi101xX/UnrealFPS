@@ -3,7 +3,11 @@ UnrealFPS is a first person shooter game with teleportation portals built on Unr
 ## Features
 - Portals that can be placed throughout the world and provides a viewport into the destination and can be entered to teleport an entity (player character, bullet, enemy characters etc.) to its counterpart portal. The portals are one-way and thus are neither visible or accessible from the "opposite" side and only teleports entities that enter from the correct side.
 
+https://user-images.githubusercontent.com/18451835/159195468-a86e5a22-71eb-4f74-8609-14e85e46012e.mp4
+
 - A core FPS gameplay loop that supports shooting of damaging projectiles, enemy characters that have a field of vision that chase any players within a certain radius and damage when in melee range
+
+https://user-images.githubusercontent.com/18451835/159195479-fe4cb639-2713-4f9a-aaf8-c8ca6f536785.mp4
 
 ## Build
 This project was build on Unreal Engine 4.27.2 and can be run on eithers Windows or MacOS. A machine with an external GPU is recommended for maximum performance.
